@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - .:/app                       # live reload
+      - /var/run/docker.sock:/var/run/docker.sock   # for sandbox
+      - sqlite_data:/app/data
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:////app/data/tasking.db
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    env_file: .env
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock   # for sandbox
+      - sqlite_data:/app/data
+    environment:
+      DATABASE_URL: sqlite:////app/data/tasking.db  # sync URL for Celery
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  flower:
+    image: mher/flower:2.0
+    command: celery flower --broker=redis://redis:6379/0 --port=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+
+volumes:
+  sqlite_data:
