@@ -5,7 +5,7 @@ python-multipart==0.0.9
 
 # Database
 sqlalchemy==2.0.30
-aiosqlite==0.20.0
+==0.20.0
 
 # Task Queue
 celery==5.4.0
