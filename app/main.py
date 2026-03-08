@@ -41,3 +41,9 @@ app.include_router(approvals.router)
 @app.get("/health", tags=["meta"])
 async def health():
     return {"status": "ok", "env": settings.app_env}
+
+if __name__ == "__main__":
+    import os
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port)
